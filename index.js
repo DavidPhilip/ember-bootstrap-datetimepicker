@@ -37,6 +37,7 @@ module.exports = {
 
     //Import js from moment
     app.import(path.join(app.bowerDirectory, '/moment/moment.js'));
+    app.import(path.join(app.bowerDirectory, '/moment/locale/de.js'));
 
     app.import(app.bowerDirectory + '/ember-cli-moment-shim/moment-shim.js', {
       exports: {
