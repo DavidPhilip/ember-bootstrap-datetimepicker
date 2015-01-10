@@ -103,7 +103,7 @@ var bsDateTimePickerComponent = Ember.Component.extend({
   },
   
   actions: {
-    click: function() {
+    toggleOpen: function() {
       this.toggleProperty('open');
     }
   }
