@@ -100,6 +100,12 @@ var bsDateTimePickerComponent = Ember.Component.extend({
       config[isDatetimepickerConfigKeys[i]] = this.get(isDatetimepickerConfigKeys[i]);
     }
     return config;
+  },
+  
+  actions: {
+    click: function() {
+      this.toggleProperty('open');
+    }
   }
 });
 
