@@ -7,9 +7,7 @@ module.exports = {
 
   included: function(app) {
     this._super.included(app);
-    
-    app = app.app;
-    
+
 		var bootstrapPath   = path.join(app.bowerDirectory,'/bootstrap/dist/');
     var options         = app.options['ember-bootstrap-datetimepicker'] || {};
 
