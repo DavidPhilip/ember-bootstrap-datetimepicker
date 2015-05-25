@@ -1,15 +1,19 @@
-
+  
 import Ember from 'ember';
+import DateTimePickerTextFieldMixin from 'ember-bootstrap-datetimepicker/mixins/datetimepicker_textfield';
 
 var computed = Ember.computed;
 var datetimepickerDefaultConfig = Ember.$.fn.datetimepicker.defaults;
 var isDatetimepickerConfigKeys = Ember.keys(datetimepickerDefaultConfig);
 
-
 var bsDateTimePickerComponent = Ember.Component.extend({
-  classNames: ["bs-datetimepicker-component"],
-  textFieldClass: Ember.TextField,
+  concatenatedProperties: ["textFieldClassNames"],
+  classNames: ["date"],
+  classNameBindings: ["inputGroupClass"],
+  textFieldClass: Ember.TextField.extend(DateTimePickerTextFieldMixin),
+  textFieldClassNames: ["form-control"],
   textFieldName: computed.alias("elementId"),
+  textFieldOptions:null,
   date: null,
   bsDateTimePicker: null,
 
@@ -18,31 +22,41 @@ var bsDateTimePickerComponent = Ember.Component.extend({
   maxDate: datetimepickerDefaultConfig["maxDate"],
   disabledDates:[],
   enabledDates:[],
+  dateIcon: "glyphicon glyphicon-calendar",
 
   disabled:false,
   open: false,
   forceDateOutput: false,
 
-
-  _initDatepicker: function() {
-
+  _initDatepicker: Ember.on('didInsertElement', function() {
+    var target;
     var self = this;
-    var bsDateTimePicker = this.$(".datetimepicker").datetimepicker(this._buildConfig());
+    if (this.get('noIcon')) {
+      var targetClassNames = '.'+ this.get('textFieldClassNames').join('.');
+      target = this.$(targetClassNames);
+    } else {
+      target = this.$();
+    }
+    var bsDateTimePicker = target.datetimepicker(this._buildConfig());
     var bsDateTimePickerFn = bsDateTimePicker.data("DateTimePicker");
 
     this.set('bsDateTimePicker', bsDateTimePickerFn);
-    bsDateTimePickerFn.setDate(self.get("date"));
     
+    if(self.get("date") === undefined) {
+      bsDateTimePickerFn.date(null);
+    } else {
+      bsDateTimePickerFn.date(self.get("date"));
+    }
+
     this.$('input.floatlabel').floatlabel({
       slideInput: false,
       labelStartTop: '10px'
     });
-
     
     bsDateTimePicker.on("dp.change", function(ev) {
       if(Ember.isNone(ev.date)) {
         self.set("date", undefined);
-      } else {
+      } else if (!ev.date.isSame(self.get('date'))) {
         if(self.forceDateOutput) {
           self.set("date", ev.date.toDate());
         } else {
@@ -56,49 +70,64 @@ var bsDateTimePickerComponent = Ember.Component.extend({
     if(self.get("open")) {
       self.get("bsDateTimePicker").show();
     }
-  }.on("didInsertElement"),
+  }),
 
 
 
-  _disabledObserver: function() {
+  _disabledObserver: Ember.observer('disabled', function() {
     if(this.get("disabled")) {
       this.get("bsDateTimePicker").disable();
     } else {
       this.get("bsDateTimePicker").enable();
     }
-  }.observes("disabled"),
+  }),
 
-  _openObserver: function() {
+  _openObserver: Ember.observer('open', function() {
     if(this.get("open")) {
       this.get("bsDateTimePicker").show();
     } else {
       this.get("bsDateTimePicker").hide();
     }
-  }.observes("open"),
+  }),
 
-  _minDateObserver: function() {
-    this.get("bsDateTimePicker").setMinDate(this.get('minDate'));
-  }.observes("minDate"),
+  _minDateObserver: Ember.observer('minDate', function() {
+    if(Ember.isNone(this.get('minDate'))) {
+      this.get("bsDateTimePicker").minDate(false);
+    } else {
+      this.get("bsDateTimePicker").minDate(this.get('minDate'));
+    }
+  }),
 
-  _maxDateObserver: function() {
-    this.get("bsDateTimePicker").setMaxDate(this.get('maxDate'));
-  }.observes("maxDate"),
+  _maxDateObserver: Ember.observer('maxDate', function() {
+    if(Ember.isNone(this.get('maxDate'))) {
+      this.get("bsDateTimePicker").maxDate(false);
+    } else {
+      this.get("bsDateTimePicker").maxDate(this.get('maxDate'));
+    }
+  }),
 
-  _disabledDatesObserver: function() {
-    this.get("bsDateTimePicker").setDisabledDates(this.get('disabledDates'));
-  }.observes("disabledDates"),
+  _disabledDatesObserver: Ember.observer('disabledDates', function() {
+    this.get("bsDateTimePicker").disabledDates(this.get('disabledDates'));
+  }),
 
-  _enabledDatesObserver: function() {
-    this.get("bsDateTimePicker").setEnabledDates(this.get('enabledDates'));
-  }.observes("enabledDates"),
+  _enabledDatesObserver: Ember.observer('enabledDates', function() {
+    this.get("bsDateTimePicker").enabledDates(this.get('enabledDates'));
+  }),
 
-  _dateObserver: function() {
-    this.get("bsDateTimePicker").setDate(this.get('date'));
-  }.observes("date"),
+  _dateObserver: Ember.observer('date', function() {
+    var bsDateTimePickerFn = this.get("bsDateTimePicker");
 
-  _destroyDatepicker: function() {
+    if(this.get("date") === undefined) {
+      bsDateTimePickerFn.date(null);
+    } else {
+      bsDateTimePickerFn.date(this.get("date"));
+    }
+
+  }),
+
+  _destroyDatepicker: Ember.on('willDestroyElement', function() {
     this.get("bsDateTimePicker").destroy();
-  }.on("willDestroyElement"),
+  }),
 
   _buildConfig: function() {
     var config = {};
@@ -106,6 +135,60 @@ var bsDateTimePickerComponent = Ember.Component.extend({
       config[isDatetimepickerConfigKeys[i]] = this.get(isDatetimepickerConfigKeys[i]);
     }
     return config;
+  },
+  
+  inputGroupClass: Ember.computed(function() {
+    if(!this.get('noIcon')) {
+      return 'input-group';
+    }
+
+  }),
+
+  /**
+
+    Exposing the textField properties.
+    Every property beginning with "textField" will be exposed to the TextField view.
+
+    ```handlebars
+    {{bs-datetimepicker textFieldPlaceholder="Date"}}
+    ```
+    "textFieldPlaceholder" will be exposed to the TextField as "placeholder" property.
+
+  */
+  setUnknownProperty: function(key, value){
+    var prop;
+    var ckey;
+    if(key.indexOf("textField") === 0) {
+
+      if(Ember.isNone(this.get('textFieldOptions'))) {
+        this.set('textFieldOptions',{});
+      }
+
+      if(Ember.IS_BINDING.test(key)) {
+        prop = key.substring(0,key.length-7);
+      }
+      else {
+       prop = key.substring(0,key.length);
+      }
+
+      ckey = prop.substring(9);
+      ckey = ckey.charAt(0).toLowerCase() + ckey.substr(1);
+
+      if(Ember.isNone(this.get('textFieldOptions.'+prop))) {
+
+        this.set('textFieldOptions.'+prop,ckey);
+
+        Ember.defineProperty(this, prop, null, value);
+      }
+    }
+    else {
+      if(Ember.platform.hasPropertyAccessors) {
+        Ember.defineProperty(this, key, null, value);
+      }
+      else {
+        this[key] = value;
+      }
+    }
   },
   
   actions: {
@@ -116,7 +199,7 @@ var bsDateTimePickerComponent = Ember.Component.extend({
 });
 
 
-var computedProps = ["minDate","maxDate","disabledDates","enabledDates"];
+var computedProps = Ember.A(["minDate","maxDate","disabledDates","enabledDates","dateIcon"]);
 var newClassConfig = {};
 for(var i=0; i<isDatetimepickerConfigKeys.length; i++) {
   if(!computedProps.contains(isDatetimepickerConfigKeys[i])) {
@@ -128,4 +211,3 @@ bsDateTimePickerComponent.reopen(newClassConfig);
 
 
 export default bsDateTimePickerComponent;
-
