@@ -36,6 +36,7 @@
     "ember-export-application-global": "^1.0.2"
   },
   "dependencies": {
+    "ember-cli-htmlbars": "0.7.4",
     "ember-cli-babel": "^5.0.0"
   },
 
