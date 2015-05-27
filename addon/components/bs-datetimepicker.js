@@ -33,12 +33,6 @@ var bsDateTimePickerComponent = Ember.Component.extend({
     this.set('bsDateTimePicker', bsDateTimePickerFn);
     bsDateTimePickerFn.setDate(self.get("date"));
     
-    this.$('input.floatlabel').floatlabel({
-      slideInput: false,
-      labelStartTop: '10px'
-    });
-
-    
     bsDateTimePicker.on("dp.change", function(ev) {
       if(Ember.isNone(ev.date)) {
         self.set("date", undefined);
